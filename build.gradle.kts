@@ -22,6 +22,10 @@ kotlin {
     jvmToolchain(25)
 }
 
+tasks.named<JavaExec>("run") {
+    standardInput = System.`in`
+}
+
 tasks.test {
     useJUnitPlatform()
 }
