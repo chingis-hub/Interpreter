@@ -31,6 +31,10 @@ Get-Content program.txt | .\gradlew.bat -q run --console=plain
 x = 10
 y = (x + 2) * 3
 
+# strings — concatenation with +, mixed with numbers
+greeting = "hello " + "world"
+label = "x=" + x
+
 # if / else
 if x > 5 then y = 1 else y = 0
 
@@ -48,7 +52,8 @@ Operators: `+ - * / %` · `== != < > <= >=` · `and or not`
 
 After the program finishes, all top-level variables are printed in declaration order:
 ```
-x: 10
+greeting: hello world
+label: x=10
 result: 120
 ```
 
@@ -74,8 +79,12 @@ Errors are written to stderr with source location:
 | Question | Decision |
 |----------|----------|
 | Number type | `Double`; printed without `.0` when the value is whole |
+| String type | UTF-16 Kotlin `String`; escape sequences `\"` `\\` `\n` `\t` |
+| String `+` | Either operand being a string coerces the other via `toString()` |
+| `==` / `!=` | Strict type equality — values of different types are never equal (e.g. `"1" != 1`, `true != 1`) |
 | Division | Always float — `5 / 2 = 2.5` |
 | `and` / `or` | Short-circuit — right side skipped when result is determined by left |
+| Truthiness | `0`, `false`, and `""` are falsy; everything else is truthy |
 | `while` body | Consumes all remaining comma-separated statements in the current context |
 | `if` branches | Each branch is exactly one statement; a comma or `else` ends it |
 | Function scope | Fresh scope with access to globals; no closures |
