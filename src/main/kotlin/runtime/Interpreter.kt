@@ -12,6 +12,8 @@ class Interpreter {
     val globals = Environment()
     private var callDepth = 0
 
+    init { Builtins.register(globals) }
+
     fun run(stmts: List<Stmt>) = stmts.forEach { exec(it, globals) }
 
     // ── statement execution ───────────────────────────────────────────────────
@@ -59,25 +61,33 @@ class Interpreter {
 
         is Expr.Call -> {
             val callee = env.get(expr.name, expr.line, expr.col)
-            if (callee !is Value.Fun)
-                throw RuntimeError(expr.line, expr.col, "'${expr.name}' is not a function")
-            if (callee.params.size != expr.args.size)
-                throw RuntimeError(expr.line, expr.col, "'${expr.name}' expects ${callee.params.size} argument(s), got ${expr.args.size}")
-            if (callDepth >= MAX_CALL_DEPTH)
-                throw RuntimeError(expr.line, expr.col, "call stack overflow")
+            when {
+                callee is Value.Native -> {
+                    if (callee.arity != expr.args.size)
+                        throw RuntimeError(expr.line, expr.col, "'${expr.name}' expects ${callee.arity} argument(s), got ${expr.args.size}")
+                    callee.body(expr.args.map { eval(it, env) }, expr.line, expr.col)
+                }
+                callee is Value.Fun -> {
+                    if (callee.params.size != expr.args.size)
+                        throw RuntimeError(expr.line, expr.col, "'${expr.name}' expects ${callee.params.size} argument(s), got ${expr.args.size}")
+                    if (callDepth >= MAX_CALL_DEPTH)
+                        throw RuntimeError(expr.line, expr.col, "call stack overflow")
 
-            val callEnv = Environment(globals)            // functions see globals, not call-site locals
-            callee.params.zip(expr.args).forEach { (param, arg) ->
-                callEnv.defineLocal(param, eval(arg, env))
-            }
-            callDepth++
-            try {
-                callee.body.forEach { exec(it, callEnv) }
-                Value.Num(0.0)                            // implicit return 0 if no return stmt
-            } catch (r: ReturnSignal) {
-                r.value
-            } finally {
-                callDepth--
+                    val callEnv = Environment(globals)    // functions see globals, not call-site locals
+                    callee.params.zip(expr.args).forEach { (param, arg) ->
+                        callEnv.defineLocal(param, eval(arg, env))
+                    }
+                    callDepth++
+                    try {
+                        callee.body.forEach { exec(it, callEnv) }
+                        Value.Num(0.0)                    // implicit return 0 if no return stmt
+                    } catch (r: ReturnSignal) {
+                        r.value
+                    } finally {
+                        callDepth--
+                    }
+                }
+                else -> throw RuntimeError(expr.line, expr.col, "'${expr.name}' is not a function")
             }
         }
     }

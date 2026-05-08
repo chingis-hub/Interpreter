@@ -14,16 +14,21 @@ sealed class Value {
     data class Fun(val params: List<String>, val body: List<Stmt>) : Value() {
         override fun toString() = "<function>"
     }
+    class Native(val arity: Int, val body: (List<Value>, Int, Int) -> Value) : Value() {
+        override fun toString() = "<native function>"
+    }
 
     fun isTruthy() = when (this) {
-        is Bool -> b
-        is Num  -> n != 0.0
-        is Fun  -> true
+        is Bool   -> b
+        is Num    -> n != 0.0
+        is Fun    -> true
+        is Native -> true
     }
 
     fun toNum(line: Int, col: Int = 0): Double = when (this) {
-        is Num  -> n
-        is Bool -> if (b) 1.0 else 0.0
-        is Fun  -> throw RuntimeError(line, col, "cannot use a function as a number")
+        is Num    -> n
+        is Bool   -> if (b) 1.0 else 0.0
+        is Fun    -> throw RuntimeError(line, col, "cannot use a function as a number")
+        is Native -> throw RuntimeError(line, col, "cannot use a function as a number")
     }
 }

@@ -30,7 +30,7 @@ fun evaluate(stmts: List<Stmt>): String {
     val interpreter = Interpreter()
     interpreter.run(stmts)
     return interpreter.globals.locals()
-        .filter { (_, v) -> v !is Value.Fun }
+        .filter { (_, v) -> v !is Value.Fun && v !is Value.Native }
         .joinToString("\n") { (name, value) -> "$name: $value" }
 }
 
