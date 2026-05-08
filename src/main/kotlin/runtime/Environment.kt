@@ -1,5 +1,7 @@
 package com.chingis.runtime
 
+import com.chingis.error.RuntimeError
+
 class Environment(private val parent: Environment? = null) {
     private val vars = linkedMapOf<String, Value>()
 

@@ -2,11 +2,9 @@ package com.chingis.parser
 
 import com.chingis.ast.Expr
 import com.chingis.ast.Stmt
-import com.chingis.error.InterpreterError
+import com.chingis.error.ParseError
 import com.chingis.lexer.Token
 import com.chingis.lexer.TokenType
-
-class ParseError(line: Int, col: Int, message: String) : InterpreterError(message, line, col)
 
 class Parser(private val tokens: List<Token>) {
     private var pos = 0

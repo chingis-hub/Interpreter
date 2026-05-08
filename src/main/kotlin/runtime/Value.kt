@@ -1,6 +1,7 @@
 package com.chingis.runtime
 
 import com.chingis.ast.Stmt
+import com.chingis.error.RuntimeError
 
 sealed class Value {
     data class Num(val n: Double) : Value() {

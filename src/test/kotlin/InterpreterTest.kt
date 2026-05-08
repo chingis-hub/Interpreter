@@ -2,8 +2,8 @@ package com.chingis
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import com.chingis.parser.ParseError
-import com.chingis.runtime.RuntimeError
+import com.chingis.error.ParseError
+import com.chingis.error.RuntimeError
 
 class InterpreterTest {
 

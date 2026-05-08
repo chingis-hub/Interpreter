@@ -2,9 +2,8 @@ package com.chingis.runtime
 
 import com.chingis.ast.Expr
 import com.chingis.ast.Stmt
-import com.chingis.error.InterpreterError
+import com.chingis.error.RuntimeError
 
-class RuntimeError(line: Int, message: String) : InterpreterError(message, line, 0)
 private class ReturnSignal(val value: Value) : Throwable()
 
 class Interpreter {

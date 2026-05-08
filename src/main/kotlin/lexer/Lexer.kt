@@ -1,8 +1,6 @@
 package com.chingis.lexer
 
-import com.chingis.error.InterpreterError
-
-class LexerError(line: Int, col: Int, message: String) : InterpreterError(message, line, col)
+import com.chingis.error.LexerError
 
 class Lexer(private val source: String) {
     private var pos = 0
