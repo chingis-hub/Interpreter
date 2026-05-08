@@ -66,6 +66,7 @@ class Parser(private val tokens: List<Token>) {
         val thenTerminators = terminators + setOf(TokenType.COMMA, TokenType.ELSE)
         val thenBranch = parseStmt(thenTerminators)
 
+        skipNewlines()
         val elseBranch = if (current.type == TokenType.ELSE) {
             advance()
             val elseTerminators = terminators + setOf(TokenType.COMMA)
@@ -122,9 +123,24 @@ class Parser(private val tokens: List<Token>) {
         expect(TokenType.RPAREN, "expected ')' after parameters")
         expect(TokenType.LBRACE, "expected '{' before function body")
         skipNewlines()
-        val body = parseStmtList(setOf(TokenType.RBRACE))
+        val body = parseFunBody()
         expect(TokenType.RBRACE, "expected '}' after function body")
         return Stmt.FunDef(name, params, body)
+    }
+
+    // statements inside {} — separated by commas OR newlines
+    private fun parseFunBody(): List<Stmt> {
+        val terminators = setOf(TokenType.RBRACE)
+        val stmts = mutableListOf<Stmt>()
+        while (current.type !in terminators) {
+            stmts.add(parseStmt(terminators))
+            when {
+                current.type == TokenType.COMMA    -> advance()
+                current.type == TokenType.NEWLINE  -> skipNewlines()
+                else -> break
+            }
+        }
+        return stmts
     }
 
     // ── expressions ──────────────────────────────────────────────────────────
