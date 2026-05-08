@@ -22,7 +22,9 @@ Get-Content program.txt | .\gradlew.bat -q run --console=plain
 ./gradlew test
 ```
 
-## Language at a glance
+## Language
+
+### Basics
 
 ```
 # variables
@@ -42,10 +44,29 @@ result = fact(5)
 
 Operators: `+ - * / %` · `== != < > <= >=` · `and or not`
 
+`and` and `or` short-circuit: the right operand is not evaluated if the left determines the result.
+
 After the program finishes, all top-level variables are printed in declaration order:
 ```
 x: 10
 result: 120
+```
+
+### Built-in functions
+
+| Function | Description |
+|---|---|
+| `print(x)` | Prints `x` to stdout; returns `x` |
+| `abs(x)` | Absolute value |
+| `floor(x)` | Floor (round toward negative infinity) |
+| `sqrt(x)` | Square root |
+
+### Errors
+
+Errors are written to stderr with source location:
+```
+[line 3:7] undefined variable 'y'
+[line 5:1] division by zero
 ```
 
 ## Design decisions
@@ -54,18 +75,40 @@ result: 120
 |----------|----------|
 | Number type | `Double`; printed without `.0` when the value is whole |
 | Division | Always float — `5 / 2 = 2.5` |
+| `and` / `or` | Short-circuit — right side skipped when result is determined by left |
 | `while` body | Consumes all remaining comma-separated statements in the current context |
-| `if` branches | Each branch is exactly one statement; a comma ends it |
+| `if` branches | Each branch is exactly one statement; a comma or `else` ends it |
 | Function scope | Fresh scope with access to globals; no closures |
 | Missing `return` | Function returns `0` implicitly |
-| Errors | Written to stderr with line number |
+| Call stack | Capped at 500 frames; exceeding it throws a runtime error |
+| Errors | Written to stderr with `[line L:C]` location |
 
 ## Architecture
 
 ```
-stdin → Lexer → Parser → Interpreter → stdout
+stdin → lex() → parse() → evaluate() → stdout
 ```
 
-- **Lexer** — tokenises source; newlines delimit top-level statements
+Each pipeline stage is an independent function in `Main.kt` and can be called separately:
+
+```kotlin
+fun lex(source: String): List<Token>        // throws LexerError
+fun parse(tokens: List<Token>): List<Stmt>  // throws ParseError
+fun evaluate(stmts: List<Stmt>): String     // throws RuntimeError
+fun interpret(source: String): String       // chains all three
+```
+
+### Package layout
+
+```
+lexer/      Token, Lexer
+ast/        Expr, Stmt  (sealed class hierarchies)
+parser/     Parser
+runtime/    Value, Environment, Interpreter, Builtins
+error/      InterpreterError (sealed), LexerError, ParseError, RuntimeError
+```
+
+- **Lexer** — tokenises source; tracks line and column; newlines delimit top-level statements
 - **Parser** — recursive descent; propagates a terminator set so `while` bodies are greedy and `if` branches are not
-- **Interpreter** — tree-walking evaluator; `return` uses a `ReturnSignal` exception for control flow
+- **Interpreter** — tree-walking evaluator; `return` uses a `ReturnSignal` throwable for control flow; built-ins are registered as `Value.Native` entries in the global environment
+- **Error hierarchy** — all errors extend `InterpreterError(message, line, col)`; `Main.kt` has a single catch that formats the location
