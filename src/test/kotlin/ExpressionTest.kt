@@ -58,4 +58,13 @@ class ExpressionTest {
     @Test fun `not operator`() {
         assertEquals("x: 1", run("x = 0\nif not false then x = 1 else x = 0"))
     }
+
+    @Test fun `and short-circuits on false left`() {
+        // right side would be a runtime error if evaluated
+        assertEquals("x: 0", run("x = 0\nif false and y then x = 1 else x = 0"))
+    }
+
+    @Test fun `or short-circuits on true left`() {
+        assertEquals("x: 1", run("x = 0\nif true or y then x = 1 else x = 0"))
+    }
 }

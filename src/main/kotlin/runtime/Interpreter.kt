@@ -51,7 +51,11 @@ class Interpreter {
             else  -> throw RuntimeError(0, "unknown unary op '${expr.op}'")
         }
 
-        is Expr.Binary -> evalBinary(expr, env)
+        is Expr.Binary -> when (expr.op) {
+            "and" -> Value.Bool(eval(expr.left, env).isTruthy() && eval(expr.right, env).isTruthy())
+            "or"  -> Value.Bool(eval(expr.left, env).isTruthy() || eval(expr.right, env).isTruthy())
+            else  -> evalBinary(expr, env)
+        }
 
         is Expr.Call -> {
             val callee = env.get(expr.name, expr.line)
@@ -103,8 +107,6 @@ class Interpreter {
             ">"  -> Value.Bool(l.toNum(line) >  r.toNum(line))
             "<=" -> Value.Bool(l.toNum(line) <= r.toNum(line))
             ">=" -> Value.Bool(l.toNum(line) >= r.toNum(line))
-            "and" -> Value.Bool(l.isTruthy() && r.isTruthy())
-            "or"  -> Value.Bool(l.isTruthy() || r.isTruthy())
             else  -> throw RuntimeError(line, "unknown binary op '${expr.op}'")
         }
     }
