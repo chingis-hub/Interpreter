@@ -1,5 +1,10 @@
 package com.chingis
 
+import com.chingis.lexer.Lexer
+import com.chingis.parser.Parser
+import com.chingis.runtime.Interpreter
+import com.chingis.runtime.Value
+
 fun main() {
     val source = generateSequence(::readLine).joinToString("\n")
     try {

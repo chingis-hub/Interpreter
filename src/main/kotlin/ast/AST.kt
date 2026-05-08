@@ -1,4 +1,4 @@
-package com.chingis
+package com.chingis.ast
 
 sealed class Expr {
     data class Number(val value: Double) : Expr()

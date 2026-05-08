@@ -1,4 +1,4 @@
-package com.chingis
+package com.chingis.lexer
 
 enum class TokenType {
     // Literals

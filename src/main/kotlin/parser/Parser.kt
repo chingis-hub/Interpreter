@@ -1,4 +1,9 @@
-package com.chingis
+package com.chingis.parser
+
+import com.chingis.ast.Expr
+import com.chingis.ast.Stmt
+import com.chingis.lexer.Token
+import com.chingis.lexer.TokenType
 
 class ParseError(message: String) : Exception(message)
 

@@ -1,4 +1,7 @@
-package com.chingis
+package com.chingis.runtime
+
+import com.chingis.ast.Expr
+import com.chingis.ast.Stmt
 
 class RuntimeError(message: String) : Exception(message)
 private class ReturnSignal(val value: Value) : Throwable()
