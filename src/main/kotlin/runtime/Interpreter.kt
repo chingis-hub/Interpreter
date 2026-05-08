@@ -7,59 +7,6 @@ import com.chingis.error.InterpreterError
 class RuntimeError(line: Int, message: String) : InterpreterError(message, line, 0)
 private class ReturnSignal(val value: Value) : Throwable()
 
-// ── values ────────────────────────────────────────────────────────────────────
-
-sealed class Value {
-    data class Num(val n: Double) : Value() {
-        override fun toString() =
-            if (n == kotlin.math.floor(n) && !n.isInfinite()) n.toLong().toString() else n.toString()
-    }
-    data class Bool(val b: Boolean) : Value() {
-        override fun toString() = b.toString()
-    }
-    data class Fun(val params: List<String>, val body: List<Stmt>) : Value() {
-        override fun toString() = "<function>"
-    }
-
-    fun isTruthy() = when (this) {
-        is Bool -> b
-        is Num  -> n != 0.0
-        is Fun  -> true
-    }
-
-    fun toNum(line: Int): Double = when (this) {
-        is Num  -> n
-        is Bool -> if (b) 1.0 else 0.0
-        is Fun  -> throw RuntimeError(line, "cannot use a function as a number")
-    }
-}
-
-// ── environment ───────────────────────────────────────────────────────────────
-
-class Environment(private val parent: Environment? = null) {
-    private val vars = linkedMapOf<String, Value>()
-
-    fun get(name: String, line: Int): Value =
-        vars[name] ?: parent?.get(name, line) ?: throw RuntimeError(line, "undefined variable '$name'")
-
-    fun set(name: String, value: Value) {
-        if (!assignExisting(name, value)) vars[name] = value
-    }
-
-    // walk up and update the first scope that owns 'name'; return false if not found
-    private fun assignExisting(name: String, value: Value): Boolean {
-        if (vars.containsKey(name)) { vars[name] = value; return true }
-        return parent?.assignExisting(name, value) ?: false
-    }
-
-    fun defineLocal(name: String, value: Value) { vars[name] = value }
-
-    // ordered entries of THIS scope only (for printing globals)
-    fun locals(): List<Pair<String, Value>> = vars.entries.map { it.key to it.value }
-}
-
-// ── interpreter ───────────────────────────────────────────────────────────────
-
 class Interpreter {
     val globals = Environment()
 
