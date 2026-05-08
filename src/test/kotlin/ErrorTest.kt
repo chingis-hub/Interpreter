@@ -29,4 +29,10 @@ class ErrorTest {
         val ex = kotlin.runCatching { run("x = (1 + 2") }.exceptionOrNull()
         assert(ex is ParseError) { "expected ParseError, got $ex" }
     }
+
+    @Test fun `call stack overflow throws`() {
+        val ex = kotlin.runCatching { run("fun inf() { return inf() }\ninf()") }.exceptionOrNull()
+        assert(ex is RuntimeError) { "expected RuntimeError, got $ex" }
+        assert(ex!!.message!!.contains("call stack overflow"))
+    }
 }

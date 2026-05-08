@@ -6,8 +6,11 @@ import com.chingis.error.RuntimeError
 
 private class ReturnSignal(val value: Value) : Throwable()
 
+private const val MAX_CALL_DEPTH = 500
+
 class Interpreter {
     val globals = Environment()
+    private var callDepth = 0
 
     fun run(stmts: List<Stmt>) = stmts.forEach { exec(it, globals) }
 
@@ -56,16 +59,21 @@ class Interpreter {
                 throw RuntimeError(expr.line, "'${expr.name}' is not a function")
             if (callee.params.size != expr.args.size)
                 throw RuntimeError(expr.line, "'${expr.name}' expects ${callee.params.size} argument(s), got ${expr.args.size}")
+            if (callDepth >= MAX_CALL_DEPTH)
+                throw RuntimeError(expr.line, "call stack overflow")
 
             val callEnv = Environment(globals)            // functions see globals, not call-site locals
             callee.params.zip(expr.args).forEach { (param, arg) ->
                 callEnv.defineLocal(param, eval(arg, env))
             }
+            callDepth++
             try {
                 callee.body.forEach { exec(it, callEnv) }
                 Value.Num(0.0)                            // implicit return 0 if no return stmt
             } catch (r: ReturnSignal) {
                 r.value
+            } finally {
+                callDepth--
             }
         }
     }
