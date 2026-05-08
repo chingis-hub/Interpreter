@@ -2,7 +2,7 @@ package com.chingis.lexer
 
 enum class TokenType {
     // Literals
-    NUMBER, IDENT,
+    NUMBER, STRING, IDENT,
 
     // Operators
     PLUS, MINUS, STAR, SLASH, PERCENT,

@@ -45,6 +45,7 @@ class Interpreter {
     private fun eval(expr: Expr, env: Environment): Value = when (expr) {
         is Expr.Number   -> Value.Num(expr.value)
         is Expr.Bool     -> Value.Bool(expr.value)
+        is Expr.Str      -> Value.Str(expr.value)
         is Expr.Variable -> env.get(expr.name, expr.line, expr.col)
 
         is Expr.Unary -> when (expr.op) {
@@ -98,7 +99,10 @@ class Interpreter {
         val r = eval(expr.right, env)
 
         return when (expr.op) {
-            "+"  -> Value.Num(l.toNum(line) + r.toNum(line))
+            "+"  -> if (l is Value.Str || r is Value.Str)
+                        Value.Str(l.toString() + r.toString())
+                    else
+                        Value.Num(l.toNum(line) + r.toNum(line))
             "-"  -> Value.Num(l.toNum(line) - r.toNum(line))
             "*"  -> Value.Num(l.toNum(line) * r.toNum(line))
             "/"  -> {
@@ -111,8 +115,8 @@ class Interpreter {
                 if (divisor == 0.0) throw RuntimeError(line, 0, "modulo by zero")
                 Value.Num(l.toNum(line) % divisor)
             }
-            "==" -> Value.Bool(l.toNum(line) == r.toNum(line))
-            "!=" -> Value.Bool(l.toNum(line) != r.toNum(line))
+            "==" -> Value.Bool(l == r)
+            "!=" -> Value.Bool(l != r)
             "<"  -> Value.Bool(l.toNum(line) <  r.toNum(line))
             ">"  -> Value.Bool(l.toNum(line) >  r.toNum(line))
             "<=" -> Value.Bool(l.toNum(line) <= r.toNum(line))

@@ -191,6 +191,7 @@ class Parser(private val tokens: List<Token>) {
     private fun parsePrimary(): Expr {
         return when (current.type) {
             TokenType.NUMBER -> { val v = current.value.toDouble(); advance(); Expr.Number(v) }
+            TokenType.STRING -> { val v = current.value;           advance(); Expr.Str(v) }
             TokenType.TRUE   -> { advance(); Expr.Bool(true) }
             TokenType.FALSE  -> { advance(); Expr.Bool(false) }
             TokenType.IDENT  -> {

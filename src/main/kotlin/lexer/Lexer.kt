@@ -50,6 +50,7 @@ class Lexer(private val source: String) {
                 ch == '{' -> single(TokenType.LBRACE, "{")
                 ch == '}' -> single(TokenType.RBRACE, "}")
                 ch == ',' -> single(TokenType.COMMA, ",")
+                ch == '"' -> readString()
                 ch == '=' -> if (peek(1) == '=') double(TokenType.EQEQ, "==") else single(TokenType.EQ, "=")
                 ch == '!' -> if (peek(1) == '=') double(TokenType.NEQ, "!=") else throw LexerError(line, col(), "unexpected character '!'")
                 ch == '<' -> if (peek(1) == '=') double(TokenType.LTEQ, "<=") else single(TokenType.LT, "<")
@@ -102,6 +103,32 @@ class Lexer(private val source: String) {
             while (pos < source.length && source[pos].isDigit()) pos++
         }
         return Token(TokenType.NUMBER, source.substring(start, pos), line, c)
+    }
+
+    private fun readString(): Token {
+        val c = col()
+        pos++ // consume opening '"'
+        val sb = StringBuilder()
+        while (pos < source.length && source[pos] != '"') {
+            if (source[pos] == '\n') throw LexerError(line, c, "unterminated string")
+            if (source[pos] == '\\') {
+                pos++
+                if (pos >= source.length) throw LexerError(line, c, "unterminated string")
+                when (source[pos]) {
+                    '"'  -> sb.append('"')
+                    '\\' -> sb.append('\\')
+                    'n'  -> sb.append('\n')
+                    't'  -> sb.append('\t')
+                    else -> throw LexerError(line, col(), "unknown escape sequence '\\${source[pos]}'")
+                }
+            } else {
+                sb.append(source[pos])
+            }
+            pos++
+        }
+        if (pos >= source.length) throw LexerError(line, c, "unterminated string")
+        pos++ // consume closing '"'
+        return Token(TokenType.STRING, sb.toString(), line, c)
     }
 
     private fun readIdentOrKeyword(): Token {

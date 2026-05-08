@@ -14,6 +14,9 @@ sealed class Value {
     data class Fun(val params: List<String>, val body: List<Stmt>) : Value() {
         override fun toString() = "<function>"
     }
+    data class Str(val s: String) : Value() {
+        override fun toString() = s
+    }
     class Native(val arity: Int, val body: (List<Value>, Int, Int) -> Value) : Value() {
         override fun toString() = "<native function>"
     }
@@ -21,6 +24,7 @@ sealed class Value {
     fun isTruthy() = when (this) {
         is Bool   -> b
         is Num    -> n != 0.0
+        is Str    -> s.isNotEmpty()
         is Fun    -> true
         is Native -> true
     }
@@ -28,6 +32,7 @@ sealed class Value {
     fun toNum(line: Int, col: Int = 0): Double = when (this) {
         is Num    -> n
         is Bool   -> if (b) 1.0 else 0.0
+        is Str    -> throw RuntimeError(line, col, "cannot use a string as a number")
         is Fun    -> throw RuntimeError(line, col, "cannot use a function as a number")
         is Native -> throw RuntimeError(line, col, "cannot use a function as a number")
     }
