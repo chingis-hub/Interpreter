@@ -1,2 +1,43 @@
+# numbers
+x = 10
+y = (x + 2) * 3
+ratio = x / 4
+
+# strings
+greeting = "hello " + "world"
+label = "x=" + x
+
+# booleans and comparisons
+big = x > 5
+same_type = "1" == 1
+
+# built-ins
+distance = abs(-42)
+side = floor(sqrt(200))
+
+# factorial (recursive)
 fun fact(n) { if n <= 0 then return 1 else return n * fact(n - 1) }
-result = fact(5)
+fact5 = fact(5)
+
+# fibonacci (iterative)
+fun fib(n) {
+    a = 0
+    b = 1
+    i = 0
+    while i < n do tmp = a, a = b, b = tmp + b, i = i + 1
+    return a
+}
+fib10 = fib(10)
+
+# fizzbuzz
+fun fizzbuzz(n) {
+    result = ""
+    if n % 15 == 0 then result = "FizzBuzz"
+    else if n % 3 == 0 then result = "Fizz"
+    else if n % 5 == 0 then result = "Buzz"
+    else result = "" + n
+    return result
+}
+fb1 = fizzbuzz(9)
+fb2 = fizzbuzz(10)
+fb3 = fizzbuzz(15)
