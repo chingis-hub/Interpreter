@@ -2,8 +2,9 @@ package com.chingis.runtime
 
 import com.chingis.ast.Expr
 import com.chingis.ast.Stmt
+import com.chingis.error.InterpreterError
 
-class RuntimeError(message: String) : Exception(message)
+class RuntimeError(line: Int, message: String) : InterpreterError(message, line, 0)
 private class ReturnSignal(val value: Value) : Throwable()
 
 // ── values ────────────────────────────────────────────────────────────────────
@@ -29,7 +30,7 @@ sealed class Value {
     fun toNum(line: Int): Double = when (this) {
         is Num  -> n
         is Bool -> if (b) 1.0 else 0.0
-        is Fun  -> throw RuntimeError("[line $line] cannot use a function as a number")
+        is Fun  -> throw RuntimeError(line, "cannot use a function as a number")
     }
 }
 
@@ -39,7 +40,7 @@ class Environment(private val parent: Environment? = null) {
     private val vars = linkedMapOf<String, Value>()
 
     fun get(name: String, line: Int): Value =
-        vars[name] ?: parent?.get(name, line) ?: throw RuntimeError("[line $line] undefined variable '$name'")
+        vars[name] ?: parent?.get(name, line) ?: throw RuntimeError(line, "undefined variable '$name'")
 
     fun set(name: String, value: Value) {
         if (!assignExisting(name, value)) vars[name] = value
@@ -98,7 +99,7 @@ class Interpreter {
         is Expr.Unary -> when (expr.op) {
             "-"   -> Value.Num(-eval(expr.operand, env).toNum(0))
             "not" -> Value.Bool(!eval(expr.operand, env).isTruthy())
-            else  -> throw RuntimeError("unknown unary op '${expr.op}'")
+            else  -> throw RuntimeError(0, "unknown unary op '${expr.op}'")
         }
 
         is Expr.Binary -> evalBinary(expr, env)
@@ -106,9 +107,9 @@ class Interpreter {
         is Expr.Call -> {
             val callee = env.get(expr.name, expr.line)
             if (callee !is Value.Fun)
-                throw RuntimeError("[line ${expr.line}] '${expr.name}' is not a function")
+                throw RuntimeError(expr.line, "'${expr.name}' is not a function")
             if (callee.params.size != expr.args.size)
-                throw RuntimeError("[line ${expr.line}] '${expr.name}' expects ${callee.params.size} argument(s), got ${expr.args.size}")
+                throw RuntimeError(expr.line, "'${expr.name}' expects ${callee.params.size} argument(s), got ${expr.args.size}")
 
             val callEnv = Environment(globals)            // functions see globals, not call-site locals
             callee.params.zip(expr.args).forEach { (param, arg) ->
@@ -124,7 +125,7 @@ class Interpreter {
     }
 
     private fun evalBinary(expr: Expr.Binary, env: Environment): Value {
-        val line = 0  // binary nodes don't carry line info; errors are rare here
+        val line = expr.line
         val l = eval(expr.left, env)
         val r = eval(expr.right, env)
 
@@ -134,12 +135,12 @@ class Interpreter {
             "*"  -> Value.Num(l.toNum(line) * r.toNum(line))
             "/"  -> {
                 val divisor = r.toNum(line)
-                if (divisor == 0.0) throw RuntimeError("division by zero")
+                if (divisor == 0.0) throw RuntimeError(line, "division by zero")
                 Value.Num(l.toNum(line) / divisor)
             }
             "%"  -> {
                 val divisor = r.toNum(line)
-                if (divisor == 0.0) throw RuntimeError("modulo by zero")
+                if (divisor == 0.0) throw RuntimeError(line, "modulo by zero")
                 Value.Num(l.toNum(line) % divisor)
             }
             "==" -> Value.Bool(l.toNum(line) == r.toNum(line))
@@ -150,7 +151,7 @@ class Interpreter {
             ">=" -> Value.Bool(l.toNum(line) >= r.toNum(line))
             "and" -> Value.Bool(l.isTruthy() && r.isTruthy())
             "or"  -> Value.Bool(l.isTruthy() || r.isTruthy())
-            else  -> throw RuntimeError("unknown binary op '${expr.op}'")
+            else  -> throw RuntimeError(line, "unknown binary op '${expr.op}'")
         }
     }
 }

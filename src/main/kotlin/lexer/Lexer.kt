@@ -1,10 +1,15 @@
 package com.chingis.lexer
 
-class LexerError(message: String) : Exception(message)
+import com.chingis.error.InterpreterError
+
+class LexerError(line: Int, col: Int, message: String) : InterpreterError(message, line, col)
 
 class Lexer(private val source: String) {
     private var pos = 0
     private var line = 1
+    private var lineStart = 0
+
+    private fun col() = pos - lineStart + 1
 
     private val keywords = mapOf(
         "fun"    to TokenType.FUN,
@@ -30,9 +35,9 @@ class Lexer(private val source: String) {
             val ch = source[pos]
             val tok = when {
                 ch == '\n' -> {
-                    line++
-                    pos++
-                    Token(TokenType.NEWLINE, "\\n", line - 1)
+                    val tokLine = line; val tokCol = col()
+                    line++; pos++; lineStart = pos
+                    Token(TokenType.NEWLINE, "\\n", tokLine, tokCol)
                 }
                 ch == '#' -> { skipLineComment(); continue }
                 ch.isDigit() || (ch == '.' && pos + 1 < source.length && source[pos + 1].isDigit()) -> readNumber()
@@ -48,10 +53,10 @@ class Lexer(private val source: String) {
                 ch == '}' -> single(TokenType.RBRACE, "}")
                 ch == ',' -> single(TokenType.COMMA, ",")
                 ch == '=' -> if (peek(1) == '=') double(TokenType.EQEQ, "==") else single(TokenType.EQ, "=")
-                ch == '!' -> if (peek(1) == '=') double(TokenType.NEQ, "!=") else error("[line $line] LexerError: unexpected character '!'")
+                ch == '!' -> if (peek(1) == '=') double(TokenType.NEQ, "!=") else throw LexerError(line, col(), "unexpected character '!'")
                 ch == '<' -> if (peek(1) == '=') double(TokenType.LTEQ, "<=") else single(TokenType.LT, "<")
                 ch == '>' -> if (peek(1) == '=') double(TokenType.GTEQ, ">=") else single(TokenType.GT, ">")
-                else -> throw LexerError("[line $line] unexpected character '$ch'")
+                else -> throw LexerError(line, col(), "unexpected character '$ch'")
             }
             tokens.add(tok)
         }
@@ -67,7 +72,7 @@ class Lexer(private val source: String) {
                     lastWasNewline = false
                 }
             }
-            add(Token(TokenType.EOF, "", line))
+            add(Token(TokenType.EOF, "", line, col()))
         }
     }
 
@@ -82,30 +87,30 @@ class Lexer(private val source: String) {
     private fun peek(offset: Int) = if (pos + offset < source.length) source[pos + offset] else ' '
 
     private fun single(type: TokenType, value: String): Token {
-        pos++
-        return Token(type, value, line)
+        val c = col(); pos++
+        return Token(type, value, line, c)
     }
 
     private fun double(type: TokenType, value: String): Token {
-        pos += 2
-        return Token(type, value, line)
+        val c = col(); pos += 2
+        return Token(type, value, line, c)
     }
 
     private fun readNumber(): Token {
-        val start = pos
+        val start = pos; val c = col()
         while (pos < source.length && source[pos].isDigit()) pos++
         if (pos < source.length && source[pos] == '.' && pos + 1 < source.length && source[pos + 1].isDigit()) {
             pos++
             while (pos < source.length && source[pos].isDigit()) pos++
         }
-        return Token(TokenType.NUMBER, source.substring(start, pos), line)
+        return Token(TokenType.NUMBER, source.substring(start, pos), line, c)
     }
 
     private fun readIdentOrKeyword(): Token {
-        val start = pos
+        val start = pos; val c = col()
         while (pos < source.length && (source[pos].isLetterOrDigit() || source[pos] == '_')) pos++
         val text = source.substring(start, pos)
         val type = keywords[text] ?: TokenType.IDENT
-        return Token(type, text, line)
+        return Token(type, text, line, c)
     }
 }

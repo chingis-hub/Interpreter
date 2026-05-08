@@ -2,16 +2,18 @@ package com.chingis.parser
 
 import com.chingis.ast.Expr
 import com.chingis.ast.Stmt
+import com.chingis.error.InterpreterError
 import com.chingis.lexer.Token
 import com.chingis.lexer.TokenType
 
-class ParseError(message: String) : Exception(message)
+class ParseError(line: Int, col: Int, message: String) : InterpreterError(message, line, col)
 
 class Parser(private val tokens: List<Token>) {
     private var pos = 0
 
     private val current get() = tokens[pos]
     private val currentLine get() = current.line
+    private val currentCol  get() = current.col
 
     // ── top-level entry ──────────────────────────────────────────────────────
 
@@ -52,7 +54,7 @@ class Parser(private val tokens: List<Token>) {
             TokenType.WHILE  -> parseWhile(terminators)
             TokenType.RETURN -> parseReturn()
             TokenType.IDENT  -> parseAssignOrCall()
-            else -> throw ParseError("[line $currentLine] unexpected token '${current.value}'")
+            else -> throw ParseError(currentLine, currentCol, "unexpected token '${current.value}'")
         }
     }
 
@@ -93,7 +95,7 @@ class Parser(private val tokens: List<Token>) {
     // IDENT = expr   or   IDENT(args)  as a statement
     private fun parseAssignOrCall(): Stmt {
         val name = current.value
-        val line = currentLine
+        val line = currentLine; val col = currentCol
         advance()
         return if (current.type == TokenType.EQ) {
             advance()
@@ -101,7 +103,7 @@ class Parser(private val tokens: List<Token>) {
         } else if (current.type == TokenType.LPAREN) {
             Stmt.ExprStmt(finishCall(name, line))
         } else {
-            throw ParseError("[line $line] expected '=' or '(' after identifier '$name'")
+            throw ParseError(line, col, "expected '=' or '(' after identifier '$name'")
         }
     }
 
@@ -134,7 +136,8 @@ class Parser(private val tokens: List<Token>) {
     private fun parseOr(): Expr {
         var left = parseAnd()
         while (current.type == TokenType.OR) {
-            advance(); left = Expr.Binary("or", left, parseAnd())
+            val line = currentLine; advance()
+            left = Expr.Binary("or", left, parseAnd(), line)
         }
         return left
     }
@@ -142,7 +145,8 @@ class Parser(private val tokens: List<Token>) {
     private fun parseAnd(): Expr {
         var left = parseNot()
         while (current.type == TokenType.AND) {
-            advance(); left = Expr.Binary("and", left, parseNot())
+            val line = currentLine; advance()
+            left = Expr.Binary("and", left, parseNot(), line)
         }
         return left
     }
@@ -157,8 +161,8 @@ class Parser(private val tokens: List<Token>) {
         while (current.type in setOf(
                 TokenType.EQEQ, TokenType.NEQ,
                 TokenType.LT, TokenType.GT, TokenType.LTEQ, TokenType.GTEQ)) {
-            val op = current.value; advance()
-            left = Expr.Binary(op, left, parseAddSub())
+            val op = current.value; val line = currentLine; advance()
+            left = Expr.Binary(op, left, parseAddSub(), line)
         }
         return left
     }
@@ -166,8 +170,8 @@ class Parser(private val tokens: List<Token>) {
     private fun parseAddSub(): Expr {
         var left = parseMulDiv()
         while (current.type in setOf(TokenType.PLUS, TokenType.MINUS)) {
-            val op = current.value; advance()
-            left = Expr.Binary(op, left, parseMulDiv())
+            val op = current.value; val line = currentLine; advance()
+            left = Expr.Binary(op, left, parseMulDiv(), line)
         }
         return left
     }
@@ -175,8 +179,8 @@ class Parser(private val tokens: List<Token>) {
     private fun parseMulDiv(): Expr {
         var left = parseUnary()
         while (current.type in setOf(TokenType.STAR, TokenType.SLASH, TokenType.PERCENT)) {
-            val op = current.value; advance()
-            left = Expr.Binary(op, left, parseUnary())
+            val op = current.value; val line = currentLine; advance()
+            left = Expr.Binary(op, left, parseUnary(), line)
         }
         return left
     }
@@ -202,7 +206,7 @@ class Parser(private val tokens: List<Token>) {
                 expect(TokenType.RPAREN, "expected ')'")
                 expr
             }
-            else -> throw ParseError("[line $currentLine] unexpected token '${current.value}' in expression")
+            else -> throw ParseError(currentLine, currentCol, "unexpected token '${current.value}' in expression")
         }
     }
 
@@ -225,12 +229,12 @@ class Parser(private val tokens: List<Token>) {
     private fun advance(): Token { val t = tokens[pos]; if (pos < tokens.size - 1) pos++; return t }
 
     private fun expect(type: TokenType, message: String): Token {
-        if (current.type != type) throw ParseError("[line $currentLine] $message, got '${current.value}'")
+        if (current.type != type) throw ParseError(currentLine, currentCol, "$message, got '${current.value}'")
         return advance()
     }
 
     private fun expectIdent(message: String): String {
-        if (current.type != TokenType.IDENT) throw ParseError("[line $currentLine] $message, got '${current.value}'")
+        if (current.type != TokenType.IDENT) throw ParseError(currentLine, currentCol, "$message, got '${current.value}'")
         val name = current.value; advance(); return name
     }
 

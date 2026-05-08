@@ -18,4 +18,4 @@ enum class TokenType {
     NEWLINE, EOF
 }
 
-data class Token(val type: TokenType, val value: String, val line: Int)
+data class Token(val type: TokenType, val value: String, val line: Int, val col: Int)

@@ -1,6 +1,7 @@
 package com.chingis
 
 import com.chingis.ast.Stmt
+import com.chingis.error.InterpreterError
 import com.chingis.lexer.Lexer
 import com.chingis.lexer.Token
 import com.chingis.parser.Parser
@@ -11,8 +12,13 @@ fun main() {
     val source = generateSequence(::readLine).joinToString("\n")
     try {
         print(interpret(source))
-    } catch (e: Exception) {
-        System.err.println(e.message)
+    } catch (e: InterpreterError) {
+        val loc = when {
+            e.line > 0 && e.col > 0 -> "[line ${e.line}:${e.col}] "
+            e.line > 0              -> "[line ${e.line}] "
+            else                    -> ""
+        }
+        System.err.println("$loc${e.message}")
     }
 }
 
