@@ -115,13 +115,20 @@ class Interpreter {
                 if (divisor == 0.0) throw RuntimeError(line, 0, "modulo by zero")
                 Value.Num(l.toNum(line) % divisor)
             }
-            "==" -> Value.Bool(l == r)
-            "!=" -> Value.Bool(l != r)
+            "==" -> Value.Bool(valuesEqual(l, r))
+            "!=" -> Value.Bool(!valuesEqual(l, r))
             "<"  -> Value.Bool(l.toNum(line) <  r.toNum(line))
             ">"  -> Value.Bool(l.toNum(line) >  r.toNum(line))
             "<=" -> Value.Bool(l.toNum(line) <= r.toNum(line))
             ">=" -> Value.Bool(l.toNum(line) >= r.toNum(line))
             else  -> throw RuntimeError(line, 0, "unknown binary op '${expr.op}'")
         }
+    }
+
+    private fun valuesEqual(a: Value, b: Value) = when {
+        a is Value.Num  && b is Value.Num  -> a.n == b.n
+        a is Value.Bool && b is Value.Bool -> a.b == b.b
+        a is Value.Str  && b is Value.Str  -> a.s == b.s
+        else -> false
     }
 }
