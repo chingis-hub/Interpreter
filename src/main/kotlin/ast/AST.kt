@@ -3,10 +3,10 @@ package com.chingis.ast
 sealed class Expr {
     data class Number(val value: Double) : Expr()
     data class Bool(val value: Boolean) : Expr()
-    data class Variable(val name: String, val line: Int) : Expr()
+    data class Variable(val name: String, val line: Int, val col: Int) : Expr()
     data class Unary(val op: String, val operand: Expr) : Expr()
     data class Binary(val op: String, val left: Expr, val right: Expr, val line: Int) : Expr()
-    data class Call(val name: String, val args: List<Expr>, val line: Int) : Expr()
+    data class Call(val name: String, val args: List<Expr>, val line: Int, val col: Int) : Expr()
 }
 
 sealed class Stmt {

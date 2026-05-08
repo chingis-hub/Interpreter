@@ -5,8 +5,8 @@ import com.chingis.error.RuntimeError
 class Environment(private val parent: Environment? = null) {
     private val vars = linkedMapOf<String, Value>()
 
-    fun get(name: String, line: Int): Value =
-        vars[name] ?: parent?.get(name, line) ?: throw RuntimeError(line, "undefined variable '$name'")
+    fun get(name: String, line: Int, col: Int = 0): Value =
+        vars[name] ?: parent?.get(name, line, col) ?: throw RuntimeError(line, col, "undefined variable '$name'")
 
     fun set(name: String, value: Value) {
         if (!assignExisting(name, value)) vars[name] = value

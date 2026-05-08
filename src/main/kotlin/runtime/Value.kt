@@ -21,9 +21,9 @@ sealed class Value {
         is Fun  -> true
     }
 
-    fun toNum(line: Int): Double = when (this) {
+    fun toNum(line: Int, col: Int = 0): Double = when (this) {
         is Num  -> n
         is Bool -> if (b) 1.0 else 0.0
-        is Fun  -> throw RuntimeError(line, "cannot use a function as a number")
+        is Fun  -> throw RuntimeError(line, col, "cannot use a function as a number")
     }
 }

@@ -43,12 +43,12 @@ class Interpreter {
     private fun eval(expr: Expr, env: Environment): Value = when (expr) {
         is Expr.Number   -> Value.Num(expr.value)
         is Expr.Bool     -> Value.Bool(expr.value)
-        is Expr.Variable -> env.get(expr.name, expr.line)
+        is Expr.Variable -> env.get(expr.name, expr.line, expr.col)
 
         is Expr.Unary -> when (expr.op) {
             "-"   -> Value.Num(-eval(expr.operand, env).toNum(0))
             "not" -> Value.Bool(!eval(expr.operand, env).isTruthy())
-            else  -> throw RuntimeError(0, "unknown unary op '${expr.op}'")
+            else  -> throw RuntimeError(0, 0, "unknown unary op '${expr.op}'")
         }
 
         is Expr.Binary -> when (expr.op) {
@@ -58,13 +58,13 @@ class Interpreter {
         }
 
         is Expr.Call -> {
-            val callee = env.get(expr.name, expr.line)
+            val callee = env.get(expr.name, expr.line, expr.col)
             if (callee !is Value.Fun)
-                throw RuntimeError(expr.line, "'${expr.name}' is not a function")
+                throw RuntimeError(expr.line, expr.col, "'${expr.name}' is not a function")
             if (callee.params.size != expr.args.size)
-                throw RuntimeError(expr.line, "'${expr.name}' expects ${callee.params.size} argument(s), got ${expr.args.size}")
+                throw RuntimeError(expr.line, expr.col, "'${expr.name}' expects ${callee.params.size} argument(s), got ${expr.args.size}")
             if (callDepth >= MAX_CALL_DEPTH)
-                throw RuntimeError(expr.line, "call stack overflow")
+                throw RuntimeError(expr.line, expr.col, "call stack overflow")
 
             val callEnv = Environment(globals)            // functions see globals, not call-site locals
             callee.params.zip(expr.args).forEach { (param, arg) ->
@@ -93,12 +93,12 @@ class Interpreter {
             "*"  -> Value.Num(l.toNum(line) * r.toNum(line))
             "/"  -> {
                 val divisor = r.toNum(line)
-                if (divisor == 0.0) throw RuntimeError(line, "division by zero")
+                if (divisor == 0.0) throw RuntimeError(line, 0, "division by zero")
                 Value.Num(l.toNum(line) / divisor)
             }
             "%"  -> {
                 val divisor = r.toNum(line)
-                if (divisor == 0.0) throw RuntimeError(line, "modulo by zero")
+                if (divisor == 0.0) throw RuntimeError(line, 0, "modulo by zero")
                 Value.Num(l.toNum(line) % divisor)
             }
             "==" -> Value.Bool(l.toNum(line) == r.toNum(line))
@@ -107,7 +107,7 @@ class Interpreter {
             ">"  -> Value.Bool(l.toNum(line) >  r.toNum(line))
             "<=" -> Value.Bool(l.toNum(line) <= r.toNum(line))
             ">=" -> Value.Bool(l.toNum(line) >= r.toNum(line))
-            else  -> throw RuntimeError(line, "unknown binary op '${expr.op}'")
+            else  -> throw RuntimeError(line, 0, "unknown binary op '${expr.op}'")
         }
     }
 }

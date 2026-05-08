@@ -99,7 +99,7 @@ class Parser(private val tokens: List<Token>) {
             advance()
             Stmt.Assign(name, parseExpr())
         } else if (current.type == TokenType.LPAREN) {
-            Stmt.ExprStmt(finishCall(name, line))
+            Stmt.ExprStmt(finishCall(name, line, col))
         } else {
             throw ParseError(line, col, "expected '=' or '(' after identifier '$name'")
         }
@@ -194,9 +194,9 @@ class Parser(private val tokens: List<Token>) {
             TokenType.TRUE   -> { advance(); Expr.Bool(true) }
             TokenType.FALSE  -> { advance(); Expr.Bool(false) }
             TokenType.IDENT  -> {
-                val name = current.value; val line = currentLine; advance()
-                if (current.type == TokenType.LPAREN) finishCall(name, line)
-                else Expr.Variable(name, line)
+                val name = current.value; val line = currentLine; val col = currentCol; advance()
+                if (current.type == TokenType.LPAREN) finishCall(name, line, col)
+                else Expr.Variable(name, line, col)
             }
             TokenType.LPAREN -> {
                 advance()
@@ -209,7 +209,7 @@ class Parser(private val tokens: List<Token>) {
     }
 
     // parse argument list after the opening '(' is seen
-    private fun finishCall(name: String, line: Int): Expr.Call {
+    private fun finishCall(name: String, line: Int, col: Int): Expr.Call {
         advance() // consume '('
         val args = mutableListOf<Expr>()
         if (current.type != TokenType.RPAREN) {
@@ -219,7 +219,7 @@ class Parser(private val tokens: List<Token>) {
             }
         }
         expect(TokenType.RPAREN, "expected ')' after arguments")
-        return Expr.Call(name, args, line)
+        return Expr.Call(name, args, line, col)
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
