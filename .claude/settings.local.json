@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(New-Item *)",
+      "Bash(Get-ChildItem -Force)",
+      "Bash(Select-Object Mode, Name)",
+      "Bash(Remove-Item *)",
+      "Bash(./gradlew test *)",
+      "Bash(Get-Content program.txt)",
+      "Bash(.\\\\gradlew.bat -q run --console=plain)",
+      "PowerShell(Get-Content program.txt | .\\\\gradlew.bat -q run --console=plain 2>&1)",
+      "PowerShell(Get-Content program.txt -Encoding UTF8 | .\\\\gradlew.bat -q run --console=plain 2>&1)",
+      "PowerShell($OutputEncoding = [System.Text.Encoding]::UTF8; Get-Content program.txt | .\\\\gradlew.bat -q run --console=plain 2>&1)"
+    ]
+  }
+}

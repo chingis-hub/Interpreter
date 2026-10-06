@@ -5,3 +5,5 @@ sealed class InterpreterError(message: String, val line: Int, val col: Int) : Ex
 class LexerError  (line: Int, col: Int, message: String) : InterpreterError(message, line, col)
 class ParseError  (line: Int, col: Int, message: String) : InterpreterError(message, line, col)
 class RuntimeError(line: Int, col: Int, message: String) : InterpreterError(message, line, col)
+//ffewfwfwef
+//feewfwf
