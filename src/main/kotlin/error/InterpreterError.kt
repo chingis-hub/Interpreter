@@ -7,3 +7,6 @@ class ParseError  (line: Int, col: Int, message: String) : InterpreterError(mess
 class RuntimeError(line: Int, col: Int, message: String) : InterpreterError(message, line, col)
 //ffewfwfwef
 //feewfwf
+
+// ejfewf  oimjwelgm/
+// klfmlkwmf
